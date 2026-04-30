@@ -5,6 +5,11 @@ import { h, icon, todayKey } from '../utils.js';
 import { ICONS } from '../constants.js';
 import { chip } from '../components/ui.js';
 
+// Module-level: remembers whether the user has manually opened/closed
+// the check-in this session, so chip selections don't collapse it.
+// null = use smart default; true/false = user's explicit choice.
+let userExpandedState = null;
+
 export const dailyCheckIn = (state, dispatch) => {
   const dateKey = todayKey();
   const checkIn = state.dailyCheckIns[dateKey] || {};
@@ -24,7 +29,7 @@ export const dailyCheckIn = (state, dispatch) => {
   const chev = icon(ICONS.chevright, 18, 'chev');
   const header = h('button', { className: 'expand-toggle' }, titleWrap, chev);
 
-  let expanded = wantExpanded;
+  let expanded = userExpandedState !== null ? userExpandedState : wantExpanded;
   const body = h('div');
   body.style.display = expanded ? 'block' : 'none';
   body.style.marginTop = '16px';
@@ -34,6 +39,7 @@ export const dailyCheckIn = (state, dispatch) => {
 
   header.addEventListener('click', () => {
     expanded = !expanded;
+    userExpandedState = expanded; // remember the user's intent across re-renders
     body.style.display = expanded ? 'block' : 'none';
     wrap.classList.toggle('expanded', expanded);
   });
@@ -114,6 +120,7 @@ export const dailyCheckIn = (state, dispatch) => {
     className: 'btn btn-secondary',
     onClick: () => {
       update({ skipped: true, completed: false });
+      userExpandedState = false; // explicit user action: keep collapsed
       expanded = false;
       body.style.display = 'none';
       wrap.classList.remove('expanded');
