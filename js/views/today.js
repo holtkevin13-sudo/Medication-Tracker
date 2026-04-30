@@ -292,7 +292,29 @@ const intervalMedCard = (med, state, dispatch) => {
   left.appendChild(statusEl);
 
   if (lastTaken) {
-    left.appendChild(h('div', { className: 'last' }, `Last taken ${fmtDate(lastTaken)}`));
+    const lastRow = h('div', {
+      style: {
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px',
+        marginTop: '4px',
+        flexWrap: 'wrap',
+      },
+    });
+    lastRow.appendChild(h('span', { className: 'last' }, `Last taken ${fmtDate(lastTaken)}`));
+    const editLastBtn = h('button', {
+      style: {
+        fontSize: '11px',
+        color: 'var(--text-3)',
+        padding: '3px 10px',
+        border: '1px solid var(--border-strong)',
+        borderRadius: '6px',
+        background: 'transparent',
+      },
+    }, 'Edit');
+    editLastBtn.addEventListener('click', () => openEditLastDose(med, lastTaken, dispatch));
+    lastRow.appendChild(editLastBtn);
+    left.appendChild(lastRow);
   }
   row.appendChild(left);
 
@@ -333,6 +355,61 @@ const openLogPastDose = (med, dispatch) => {
         close();
       });
       body.appendChild(save);
+    },
+  });
+};
+
+const openEditLastDose = (med, doseTime, dispatch) => {
+  openModal({
+    title: `Edit last dose: ${med.name}`,
+    content: (body, close) => {
+      const initDate = new Date(doseTime);
+      const dateStr = todayKey(initDate);
+      const timeStr = `${String(initDate.getHours()).padStart(2, '0')}:${String(initDate.getMinutes()).padStart(2, '0')}`;
+
+      body.appendChild(h('p', {
+        style: { color: 'var(--text-3)', fontSize: '13px', marginBottom: '16px' },
+      }, `Currently logged: ${fmtDate(doseTime)} at ${fmtTime(doseTime)}`));
+
+      body.appendChild(h('p', { className: 'checkin-label' }, 'Date'));
+      const dateInput = h('input', { type: 'date', value: dateStr });
+      body.appendChild(dateInput);
+
+      body.appendChild(h('p', { className: 'checkin-label', style: { marginTop: '12px' } }, 'Time'));
+      const timeInput = h('input', { type: 'time', value: timeStr });
+      body.appendChild(timeInput);
+
+      const saveBtn = h('button', {
+        className: 'btn btn-primary',
+        style: { marginTop: '20px' },
+      }, 'Save changes');
+      saveBtn.addEventListener('click', () => {
+        const newTime = new Date(`${dateInput.value}T${timeInput.value}`).toISOString();
+        if (newTime === doseTime) { close(); return; }
+        // Replace: remove old, add new
+        dispatch({ type: 'REMOVE_INTERVAL_MED_LOG', medId: med.id, time: doseTime });
+        dispatch({ type: 'LOG_INTERVAL_MED', medId: med.id, time: newTime });
+        close();
+      });
+      body.appendChild(saveBtn);
+
+      const removeBtn = h('button', {
+        className: 'btn btn-danger',
+        style: { marginTop: '8px' },
+      }, 'Remove this dose');
+      removeBtn.addEventListener('click', () => {
+        confirmDialog({
+          title: 'Remove this dose?',
+          message: `${fmtDate(doseTime)} at ${fmtTime(doseTime)}`,
+          confirmLabel: 'Remove',
+          danger: true,
+          onConfirm: () => {
+            dispatch({ type: 'REMOVE_INTERVAL_MED_LOG', medId: med.id, time: doseTime });
+            close();
+          },
+        });
+      });
+      body.appendChild(removeBtn);
     },
   });
 };
