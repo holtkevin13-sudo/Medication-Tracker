@@ -187,7 +187,21 @@ const dailyMedCard = (med, todayLog, dateKey, state, dispatch) => {
 
   attachLongPress(card,
     () => openEditTime(med, todayLog, dateKey, dispatch),
-    () => dispatch({ type: 'TOGGLE_DAILY_MED', medId: med.id, dateKey })
+    () => {
+      if (taken) {
+        // Already logged — confirm before un-logging to prevent accidents
+        confirmDialog({
+          title: `Mark ${med.name} as not taken?`,
+          message: `Logged at ${fmtTime(time)}. This will remove the entry.`,
+          confirmLabel: 'Mark not taken',
+          danger: true,
+          onConfirm: () => dispatch({ type: 'TOGGLE_DAILY_MED', medId: med.id, dateKey }),
+        });
+      } else {
+        // Not yet logged — log instantly, no friction
+        dispatch({ type: 'TOGGLE_DAILY_MED', medId: med.id, dateKey });
+      }
+    }
   );
 
   return card;
