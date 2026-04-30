@@ -1,7 +1,7 @@
 // Service Worker — caches app shell so it works offline and loads instantly.
 // Bump CACHE_VERSION whenever you ship updated files.
 
-const CACHE_VERSION = 'v1.0.2';
+const CACHE_VERSION = 'v1.0.3';
 const CACHE_NAME = `migraine-tracker-${CACHE_VERSION}`;
 
 const APP_SHELL = [
